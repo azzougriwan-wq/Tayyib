@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mentions légales · Tayyib</title>
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { overflow-y: auto; }
+  .doc { max-width: 68ch; margin: 0 auto; padding: 28px max(20px, env(safe-area-inset-right, 0px)) 48px max(20px, env(safe-area-inset-left, 0px)); display: grid; gap: 18px; }
+  .doc h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+  .doc h2 { margin: 8px 0 0; font-size: 17px; }
+  .doc p { margin: 0; }
+  .todo { background: var(--saffron-soft); color: var(--saffron-ink); padding: 0 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main class="doc">
+  <p><a href="./">← Tayyib</a></p>
+  <h1>Mentions légales</h1>
+
+  <h2>Éditeur</h2>
+  <p><span class="todo">[Nom et prénom de l’éditeur, ou dénomination de la micro-entreprise et numéro SIRET]</span></p>
+  <p>Contact : <span data-contact>adresse à renseigner dans config.js</span></p>
+  <p>Directeur de la publication : <span class="todo">[Nom et prénom]</span></p>
+
+  <h2>Hébergement</h2>
+  <p>GitHub, Inc. (service GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.</p>
+
+  <h2>Contenu</h2>
+  <p>Tayyib recense des restaurants signalés comme halal à Paris et en petite couronne. La liste provient principalement d’OpenStreetMap et est mise à jour chaque semaine. Le niveau indiqué (certifié, déclaré, non vérifié) reflète l’information disponible et ne constitue pas une certification. Vérifiez toujours sur place.</p>
+  <p>Horaires, prix, services et notes peuvent changer sans préavis. Pour signaler une erreur, utilisez le lien « Signaler une erreur » sur la fiche du restaurant.</p>
+
+  <h2>Données et licences</h2>
+  <p>Données cartographiques et liste des restaurants : © les contributeurs OpenStreetMap, disponibles sous licence <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">Open Database License (ODbL)</a>. La base de données de Tayyib, qui en est dérivée, est diffusée sous la même licence.</p>
+  <p>Fond de carte : © contributeurs OpenStreetMap. Bibliothèque de carte : Leaflet (licence BSD-2).</p>
+
+  <h2>Marques</h2>
+  <p>Les noms de restaurants cités appartiennent à leurs propriétaires respectifs. Leur présence dans Tayyib n’implique aucun partenariat.</p>
+</main>
+<script src="config.js"></script>
+<script>
+  (function () {
+    var c = window.TAYYIB_CONFIG || {}, el = document.querySelector('[data-contact]');
+    if (c.contactEmail) el.textContent = c.contactEmail; else el.className = 'todo';
+  })();
+</script>
+</body>
+</html>

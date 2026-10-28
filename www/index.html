@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tayyib</title>
+<meta name="description" content="Restaurants halal à Paris et en petite couronne : carte, horaires, terrasse, vente à emporter, alcool et niveau halal.">
+<meta name="theme-color" content="#0B6B5A" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Tayyib — restaurants halal à Paris et en petite couronne">
+<meta property="og:description" content="Carte et liste des restaurants halal : horaires, terrasse, vente à emporter, alcool, niveau halal.">
+<meta property="og:image" content="icons/og.png">
+<meta property="og:type" content="website">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="vendor/MarkerCluster.css">
+<link rel="stylesheet" href="styles.css">
+<script>
+  try { var th = JSON.parse(localStorage.getItem('tayyib.theme') || '"auto"');
+    if (th === 'light' || th === 'dark') document.documentElement.setAttribute('data-theme', th); } catch (e) {}
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 32 32"><rect x="7" y="7" width="18" height="18" rx="1"/><rect x="7" y="7" width="18" height="18" rx="1" transform="rotate(45 16 16)"/><circle cx="16" cy="16" r="3" style="fill:var(--surface)"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4 3 6.2v13.6l6-2.2 6 2.2 6-2.2V4l-6 2.2L9 4zM9 4v13.6M15 6.2v13.6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".9"/><circle cx="4.5" cy="12" r=".9"/><circle cx="4.5" cy="18" r=".9"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.6 4.4-2 1.3a10.5 10.5 0 0 0 5.7 5.7l1.3-2 4.4 1.6v3a2 2 0 0 1-2 2A15.5 15.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><path d="M3.5 11 20.5 3.5 13 20.5l-2-7.5z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.3 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.3-3.5-8.5S9.6 5.9 12 3.5z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="17.5" cy="5.5" r="2.3"/><circle cx="6.5" cy="12" r="2.3"/><circle cx="17.5" cy="18.5" r="2.3"/><path d="m8.5 10.8 7-4.1M8.5 13.2l7 4.1"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V4M5.5 4.5h11l-2.2 4 2.2 4h-11"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 19.5s-7-4.3-7-9.6A3.9 3.9 0 0 1 12 7.6a3.9 3.9 0 0 1 7 2.3c0 5.3-7 9.6-7 9.6z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-google" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="bar">
+    <div class="bar-row">
+      <a class="brand" href="./" aria-label="Tayyib">
+        <svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg>
+        <span class="brand-text">
+          <span class="wordmark">Tayyib</span>
+          <span class="tagline" data-i18n="app.tagline">Restos halal · Paris &amp; petite couronne</span>
+        </span>
+      </a>
+      <div class="seg" role="group">
+        <button type="button" id="viewMap" data-view="map" aria-pressed="true"><svg aria-hidden="true"><use href="#i-map"/></svg><span data-i18n="view.map">Carte</span></button>
+        <button type="button" id="viewList" data-view="list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-list"/></svg><span data-i18n="view.list">Liste</span></button>
+      </div>
+      <button type="button" class="icon-btn" id="menuBtn" data-i18n-aria="aria.menu" aria-label="Menu"><svg aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </div>
+    <div class="search-row">
+      <label class="search">
+        <svg aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="q" type="search" autocomplete="off" enterkeyhint="search" data-i18n-ph="search.ph" placeholder="Nom, cuisine, ville…">
+        <button type="button" id="qClear" class="q-clear" hidden data-i18n-aria="aria.clear" aria-label="Effacer"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </label>
+      <button type="button" class="btn-filter" id="filtersBtn">
+        <svg aria-hidden="true"><use href="#i-sliders"/></svg>
+        <span data-i18n="btn.filters">Filtres</span>
+        <span class="n-badge" id="fCount" hidden></span>
+      </button>
+    </div>
+    <div class="chips" id="chips">
+      <button type="button" class="chip chip-action" id="nearChip"><svg aria-hidden="true"><use href="#i-locate"/></svg><span data-i18n="btn.near">Autour de moi</span></button>
+      <button type="button" class="chip" data-chip="openNow" aria-pressed="false"><span class="dot" aria-hidden="true"></span><span data-i18n="chip.open">Ouvert maintenant</span></button>
+      <button type="button" class="chip" data-chip="certified" aria-pressed="false"><span data-i18n="chip.certified">Certifié</span></button>
+      <button type="button" class="chip" data-chip="terrace" aria-pressed="false"><span data-i18n="chip.terrace">Terrasse</span></button>
+      <button type="button" class="chip" data-chip="takeaway" aria-pressed="false"><span data-i18n="chip.takeaway">À emporter</span></button>
+      <button type="button" class="chip" data-chip="delivery" aria-pressed="false"><span data-i18n="chip.delivery">Livraison</span></button>
+      <button type="button" class="chip" data-chip="noAlcohol" aria-pressed="false"><span data-i18n="chip.noalcohol">Sans alcool</span></button>
+      <button type="button" class="chip" data-chip="favOnly" aria-pressed="false"><svg aria-hidden="true"><use href="#i-star"/></svg><span data-i18n="chip.favs">Favoris</span></button>
+    </div>
+  </header>
+
+  <main class="panes" id="panes" data-view="map">
+    <section class="pane-list" id="listPane" aria-labelledby="count">
+      <div class="list-head">
+        <h2 class="count" id="count" aria-live="polite"></h2>
+        <label class="sort"><span data-i18n="sort.label">Trier par</span>
+          <select id="sort">
+            <option value="name" data-i18n="sort.name">Nom</option>
+            <option value="open" data-i18n="sort.open">Ouverts d’abord</option>
+            <option value="distance" data-i18n="sort.distance" disabled>Distance</option>
+          </select>
+        </label>
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+    <section class="pane-map" id="mapPane">
+      <div id="map" role="region" aria-label="Carte"></div>
+      <p class="map-count" id="mapCount" aria-hidden="true"></p>
+      <button type="button" class="map-locate" id="mapLocate" data-i18n-aria="btn.near" aria-label="Autour de moi"><svg aria-hidden="true"><use href="#i-locate"/></svg></button>
+    </section>
+  </main>
+</div>
+
+<dialog id="detail" class="sheet sheet-detail" tabindex="-1"></dialog>
+<dialog id="filters" class="sheet" tabindex="-1"></dialog>
+<dialog id="menu" class="sheet" tabindex="-1"></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/leaflet.markercluster.js"></script>
+<script src="config.js"></script>
+<script src="i18n.js"></script>
+<script src="hours.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

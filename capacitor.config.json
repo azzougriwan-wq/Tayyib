@@ -1,0 +1,7 @@
+{
+  "appId": "fr.tayyib.app",
+  "appName": "Tayyib",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" },
+  "android": { "backgroundColor": "#F3F6F5" }
+}

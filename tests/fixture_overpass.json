@@ -1,0 +1,11 @@
+{
+  "75": {"elements": [
+    {"type": "node", "id": 1001, "lat": 48.8841, "lon": 2.3712, "tags": {"amenity": "restaurant", "name": "Test Grill Belleville", "diet:halal": "only", "cuisine": "turkish;kebab", "opening_hours": "Mo-Su 11:00-02:00", "outdoor_seating": "yes", "takeaway": "yes", "delivery": "yes", "addr:housenumber": "12", "addr:street": "Rue de Test", "addr:postcode": "75019", "phone": "+33 1 00 00 00 00", "alcohol": "no", "wheelchair": "limited"}},
+    {"type": "way", "id": 2002, "center": {"lat": 48.8566, "lon": 2.3522}, "tags": {"amenity": "restaurant", "name": "Test Saveurs du Liban", "diet:halal": "yes", "cuisine": "lebanese", "opening_hours": "Mo-Fr 12:00-14:30,19:00-23:00; Sa 19:00-23:30; Su off", "reservation": "yes", "diet:halal:certification": "AVS", "addr:postcode": "75004", "website": "https://example.org", "drink:wine": "yes"}},
+    {"type": "node", "id": 1003, "lat": 48.87, "lon": 2.34, "tags": {"amenity": "fast_food", "name": "Test Burger", "halal": "yes", "cuisine": "burger", "opening_hours": "Jan-Mar Mo-Fr 10:00-18:00"}},
+    {"type": "node", "id": 1004, "lat": 48.87, "lon": 2.34, "tags": {"amenity": "fast_food", "diet:halal": "yes"}}
+  ]},
+  "93": {"elements": [
+    {"type": "node", "id": 3001, "lat": 48.9356, "lon": 2.3539, "tags": {"amenity": "restaurant", "name": "Test Couscous Saint-Denis", "diet:halal": "yes", "cuisine": "moroccan", "opening_hours": "Tu-Su 11:30-15:00,18:30-23:00", "addr:postcode": "93200", "addr:city": "Saint-Denis", "takeaway": "only"}}
+  ]}
+}

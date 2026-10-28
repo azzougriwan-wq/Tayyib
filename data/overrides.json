@@ -1,0 +1,6 @@
+{
+  "_aide": "Corrections manuelles appliquées après chaque mise à jour. 'remove' : identifiants à masquer. 'edit' : champs à corriger par identifiant (ex. n123456). 'add' : restaurants absents d'OpenStreetMap. Voir le README.",
+  "remove": [],
+  "edit": {},
+  "add": []
+}

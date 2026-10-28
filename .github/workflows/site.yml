@@ -1,0 +1,59 @@
+name: Site et liste des restaurants
+
+# Se lance à chaque modification, chaque lundi matin, ou à la main (onglet Actions > Run workflow)
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mettre à jour la liste depuis OpenStreetMap
+        run: python3 scripts/fetch_osm.py --out www/data/restaurants.json --overrides data/overrides.json
+
+      - name: Enregistrer la nouvelle liste dans le dépôt
+        if: github.event_name != 'push'
+        run: |
+          if git diff --quiet -- www/data/restaurants.json; then
+            echo "Liste inchangée"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add www/data/restaurants.json
+          git commit -m "Mise à jour de la liste des restaurants"
+          git pull --rebase --autostash && git push || echo "::warning::Liste non enregistrée dans le dépôt (le site est quand même publié)"
+
+      - name: Préparer le site
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: bash scripts/build_web.sh dist
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

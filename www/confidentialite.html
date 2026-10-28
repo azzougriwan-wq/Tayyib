@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Confidentialité · Tayyib</title>
+<link rel="icon" href="icons/favicon.png" type="image/png">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { overflow-y: auto; }
+  .doc { max-width: 68ch; margin: 0 auto; padding: 28px max(20px, env(safe-area-inset-right, 0px)) 48px max(20px, env(safe-area-inset-left, 0px)); display: grid; gap: 18px; }
+  .doc h1 { margin: 0; font-size: 28px; letter-spacing: -.02em; }
+  .doc h2 { margin: 8px 0 0; font-size: 17px; }
+  .doc p, .doc ul { margin: 0; }
+  .doc li + li { margin-top: 6px; }
+  .todo { background: var(--saffron-soft); color: var(--saffron-ink); padding: 0 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main class="doc">
+  <p><a href="./">← Tayyib</a></p>
+  <h1>Confidentialité</h1>
+  <p>Tayyib ne demande ni compte, ni nom, ni adresse e-mail. Voici ce qui se passe quand vous utilisez l’appli.</p>
+
+  <h2>Ce qui reste sur votre appareil</h2>
+  <ul>
+    <li><strong>Favoris, langue, thème, vue carte ou liste</strong> : enregistrés dans le stockage local de votre navigateur ou de l’appli. Ils ne sont jamais envoyés.</li>
+    <li><strong>Votre position</strong> (bouton « Autour de moi ») : demandée seulement si vous touchez le bouton, utilisée sur l’appareil pour trier par distance, jamais envoyée ni conservée.</li>
+  </ul>
+
+  <h2>Services tiers</h2>
+  <ul>
+    <li><strong>Hébergement</strong> : GitHub Pages enregistre des journaux techniques (dont l’adresse IP) pour assurer le service. <a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Politique de GitHub</a>.</li>
+    <li><strong>Fond de carte</strong> : les images de la carte viennent des serveurs de la fondation OpenStreetMap, qui reçoivent votre adresse IP. <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">Politique de l’OSMF</a>.</li>
+    <li><strong>Liens externes</strong> (Google Maps, site du restaurant, PayPal) : ils ouvrent un autre service, soumis à sa propre politique.</li>
+    <li><strong>Note Google</strong>, si elle est affichée : le nom et l’adresse du restaurant consulté sont envoyés à Google pour obtenir la note. Aucune donnée vous concernant n’est ajoutée par Tayyib.</li>
+  </ul>
+
+  <h2>Cookies et publicité</h2>
+  <p>Tayyib n’utilise aucun cookie de mesure d’audience ni de publicité. Si de la publicité est ajoutée plus tard, un bandeau vous demandera votre accord avant tout cookie publicitaire, et cette page sera mise à jour.</p>
+
+  <h2>Vos droits</h2>
+  <p>Pour toute question : <span data-contact>adresse à renseigner dans config.js</span>.</p>
+  <p class="hint">Dernière mise à jour : 28 octobre 2026.</p>
+</main>
+<script src="config.js"></script>
+<script>
+  (function () {
+    var c = window.TAYYIB_CONFIG || {}, el = document.querySelector('[data-contact]');
+    if (c.contactEmail) el.textContent = c.contactEmail; else el.className = 'todo';
+  })();
+</script>
+</body>
+</html>

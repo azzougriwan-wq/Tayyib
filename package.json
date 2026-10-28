@@ -1,0 +1,16 @@
+{
+  "name": "tayyib",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Restaurants halal à Paris et en petite couronne — site et appli Android",
+  "scripts": {
+    "build": "bash scripts/build_web.sh dist",
+    "test": "node tests/test_hours.js && python3 scripts/fetch_osm.py --fixture tests/fixture_overpass.json --out /tmp/tayyib-test.json --min-per-dep 1"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}
