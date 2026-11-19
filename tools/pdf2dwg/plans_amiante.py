@@ -19,11 +19,14 @@ import re
 import sys
 from pathlib import Path
 
+import math
+
 import cv2
 import ezdxf
 import numpy as np
 import pymupdf
 from ezdxf.enums import TextEntityAlignment
+from ezdxf.fonts import fonts
 
 # Tailles communiquées par le client (prioritaires sur le tableau du PDF) : (l, L)
 TAILLES_IMPOSEES = {"Salle d'exercice": (6.90, 9.00), "Repos (dortoir)": (6.58, 5.50)}
@@ -68,10 +71,50 @@ def new_doc():
     return doc
 
 
-def text(msp, s, x, y, h, layer="TEXTES", align=TextEntityAlignment.MIDDLE_CENTER):
-    t = msp.add_text(s, height=h, dxfattribs={"layer": layer, "style": "ARIAL"})
-    t.set_placement((x, y), align=align)
+_FONT = fonts.make_font("LiberationSans-Regular.ttf", cap_height=1.0)  # mêmes métriques qu'Arial
+
+
+def text(msp, s, x, y, h, layer="TEXTES", align=TextEntityAlignment.MIDDLE_CENTER, rot=0.0):
+    """Texte posé par son point d'insertion gauche/ligne de base, calculé ici.
+
+    Un texte centré par alignement AutoCAD s'affiche décalé dans certains
+    visualiseurs DWG ; on calcule donc nous-mêmes la position du coin gauche.
+    """
+    t = msp.add_text(s, height=h, rotation=rot, dxfattribs={"layer": layer, "style": "ARIAL"})
+    if align == TextEntityAlignment.MIDDLE_CENTER:
+        w = _FONT.text_width(s) * h
+        a = math.radians(rot)
+        ux, uy = math.cos(a), math.sin(a)          # direction du texte
+        vx, vy = -uy, ux                           # perpendiculaire (vers le haut du texte)
+        x, y = x - ux * w / 2 - vx * h / 2, y - uy * w / 2 - vy * h / 2
+    t.set_placement((x, y))
     return t
+
+
+def cote(msp, p1, p2, decal, valeur, h=0.30):
+    """Cote dessinée en traits simples (lignes d'attache, ligne de cote, tirets
+    obliques, texte) : identique dans tous les logiciels, sans recalcul."""
+    at = {"layer": "COTES"}
+    (x1, y1), (x2, y2) = p1, p2
+    L = math.hypot(x2 - x1, y2 - y1)
+    ux, uy = (x2 - x1) / L, (y2 - y1) / L
+    nx, ny = -uy * decal, ux * decal               # décalage de la ligne de cote
+    a1, a2 = (x1 + nx, y1 + ny), (x2 + nx, y2 + ny)
+    sgn = 1 if decal >= 0 else -1
+    for (px, py), (qx, qy) in ((p1, a1), (p2, a2)):  # lignes d'attache, 10 cm au-delà
+        msp.add_line((px, py), (qx - uy * 0.1 * sgn, qy + ux * 0.1 * sgn), dxfattribs=at)
+    msp.add_line(a1, a2, dxfattribs=at)
+    t = 0.12                                       # tirets obliques (architecture)
+    for ax, ay in (a1, a2):
+        dx, dy = (ux - uy) * t, (uy + ux) * t
+        msp.add_line((ax - dx, ay - dy), (ax + dx, ay + dy), dxfattribs=at)
+    rot = math.degrees(math.atan2(uy, ux))
+    if rot <= -90 or rot > 90:
+        rot += 180
+    mx, my = (a1[0] + a2[0]) / 2, (a1[1] + a2[1]) / 2
+    off = 0.08 + h / 2                             # texte au-dessus de la ligne de cote
+    r = math.radians(rot)
+    text(msp, valeur, mx - math.sin(r) * off, my + math.cos(r) * off, h, "COTES", rot=rot)
 
 
 # ------------------------------------------------------------------ mesures
@@ -212,27 +255,27 @@ def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]
         if complet:
             msp.add_lwpolyline([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], close=True,
                                dxfattribs={"layer": "PIECES_COTES_INSCRITES"})
-        d = msp.add_linear_dim(base=(cx, y1 - 0.6), p1=(x0, y1), p2=(x1, y1), dimstyle="COTES_M",
-                               dxfattribs={"layer": "COTES"})
-        d.render()
-        d = msp.add_linear_dim(base=(x1 - 0.6, cy), p1=(x1, y0), p2=(x1, y1), angle=90,
-                               dimstyle="COTES_M", dxfattribs={"layer": "COTES"})
-        d.render()
+        cote(msp, (x0, y1), (x1, y1), -0.6, f"{l_horiz:.2f} m".replace(".", ","))   # longueur
+        cote(msp, (x1, y0), (x1, y1), 0.6, f"{l_vert:.2f} m".replace(".", ","))     # largeur
         if complet:
             text(msp, num, cx, cy + 0.35, 0.45)
             text(msp, nom, cx, cy - 0.2, 0.22)
             text(msp, f"{l_vert:.2f} × {l_horiz:.2f} m – S = {l_vert * l_horiz:.2f} m²".replace(".", ","),
                  cx, cy - 0.6, 0.18)
         else:
-            titre = f"{num} – {nom}"
-            dispo = min(l_horiz, dw) - 1.6          # place libre entre les murs et la cote verticale
-            h1 = min(0.40, dispo / (0.55 * len(titre)))
-            h2 = min(0.45, dispo / (0.55 * 13))
-            h1 = min(0.30, dispo / (0.55 * len(nom)))
-            text(msp, num, cx - 0.3, cy + 0.85, 0.50)
-            text(msp, nom, cx - 0.3, cy + 0.3, h1)
-            text(msp, f"{l_horiz:.2f} × {l_vert:.2f} m".replace(".", ","), cx - 0.3, cy - 0.3, h2)
-            text(msp, "(L × l)", cx - 0.3, cy - 0.75, 0.2)
+            # zone libre : du mur gauche dessiné jusqu'au texte de la cote verticale
+            gauche = max(x0, cx - dw / 2) + 0.25
+            droite = min(x1, cx + dw / 2) - 0.6 - 0.55
+            lx, dispo = (gauche + droite) / 2, droite - gauche
+            dims = f"{l_horiz:.2f} × {l_vert:.2f} m".replace(".", ",")
+
+            def fit(s_, hmax):
+                return min(hmax, dispo / _FONT.text_width(s_))
+
+            text(msp, num, lx, cy + 0.85, fit(num, 0.50))
+            text(msp, nom, lx, cy + 0.3, fit(nom, 0.30))
+            text(msp, dims, lx, cy - 0.3, fit(dims, 0.45))
+            text(msp, "(L × l)", lx, cy - 0.75, 0.2)
         e = max(abs(dw - l_horiz), abs(dh - l_vert))
         ecarts.append(f"{num} : inscrit {l_vert:.2f} × {l_horiz:.2f} – dessin {dh:.2f} × {dw:.2f}"
                       .replace(".", ",") + (f"  (écart {e:.2f} m)".replace(".", ",") if e >= 0.05 else ""))
