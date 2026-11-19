@@ -55,7 +55,7 @@ def new_doc():
                             ("NOTES", 7, 13)]:
         doc.layers.add(name, color=color, lineweight=lw)
     ds = doc.dimstyles.new("COTES_M")
-    for k, v in dict(dimtxsty="ARIAL", dimtxt=0.22, dimasz=0.15, dimblk="ARCHTICK",
+    for k, v in dict(dimtxsty="ARIAL", dimtxt=0.30, dimasz=0.18, dimblk="ARCHTICK",
                      dimexe=0.08, dimexo=0.05, dimgap=0.05, dimdec=2, dimdsep=ord(","),
                      dimlunit=2, dimzin=0, dimtad=1, dimpost="<> m",
                      dimclrd=1, dimclre=1, dimclrt=1).items():
@@ -116,10 +116,25 @@ def black_raster(page, dpi=600):
 # ------------------------------------------------------------------ export
 
 def is_cartouche(r):
-    return r.width > 400 or (r.x1 < 150 and r.y0 > 470) or (270 < r.x0 and r.x1 < 350 and r.y0 > 435 and r.y1 < 560)
+    """Cadre de feuille, cartouche (bas gauche) et encadré « Etage / adresse » central."""
+    cx, cy = (r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2
+    return (r.width > 400 or (cx < 150 and cy > 470)
+            or (275 < cx < 350 and 435 < cy < 560 and r.width < 80 and r.height < 120))
 
 
-def convert(pdf: Path, out: Path, etage: str) -> list[str]:
+def item_in_cartouche(it):
+    """Segment situé dans le cartouche (bas gauche) ou l'encadré central « Etage / adresse »."""
+    if it[0] == "re":
+        pts = [it[1].tl, it[1].br]
+    elif it[0] == "qu":
+        pts = [it[1].ul, it[1].lr]
+    else:
+        pts = [v for v in it[1:] if hasattr(v, "x")]
+    return all((p.x < 140 and p.y > 475) or (278 < p.x < 332 and 440 < p.y < 550) for p in pts)
+
+
+def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]:
+    """complet=False : fond de plan + salles cotées seulement (ni amiante, ni TE, ni notes, ni cartouche)."""
     pdoc = pymupdf.open(pdf)
     page = pdoc[0]
     doc = new_doc()
@@ -130,9 +145,13 @@ def convert(pdf: Path, out: Path, etage: str) -> list[str]:
         if rgb(dr.get("color")) != BLACK or dr["rect"].x0 > 432 and dr["rect"].y0 > 390:
             continue
         layer = "CARTOUCHE" if is_cartouche(dr["rect"]) else "PLAN_EXISTANT"
+        if layer == "CARTOUCHE" and not complet:
+            continue
         at = {"layer": layer}
         for it in dr["items"]:
             k = it[0]
+            if not complet and item_in_cartouche(it):
+                continue
             if k == "l":
                 msp.add_line(M(it[1].x, it[1].y), M(it[2].x, it[2].y), dxfattribs=at)
             elif k == "c":
@@ -166,21 +185,40 @@ def convert(pdf: Path, out: Path, etage: str) -> list[str]:
         cx, cy = M((xl + xr) / 2, (yt + yb) / 2)
         x0, x1 = cx - l_horiz / 2, cx + l_horiz / 2
         y0, y1 = cy - l_vert / 2, cy + l_vert / 2
-        msp.add_lwpolyline([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], close=True,
-                           dxfattribs={"layer": "PIECES_COTES_INSCRITES"})
+        if complet:
+            msp.add_lwpolyline([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], close=True,
+                               dxfattribs={"layer": "PIECES_COTES_INSCRITES"})
         d = msp.add_linear_dim(base=(cx, y1 - 0.6), p1=(x0, y1), p2=(x1, y1), dimstyle="COTES_M",
                                dxfattribs={"layer": "COTES"})
         d.render()
         d = msp.add_linear_dim(base=(x1 - 0.6, cy), p1=(x1, y0), p2=(x1, y1), angle=90,
                                dimstyle="COTES_M", dxfattribs={"layer": "COTES"})
         d.render()
-        text(msp, num, cx, cy + 0.35, 0.45)
-        text(msp, nom, cx, cy - 0.2, 0.22)
-        text(msp, f"{l_vert:.2f} × {l_horiz:.2f} m – S = {l_vert * l_horiz:.2f} m²".replace(".", ","),
-             cx, cy - 0.6, 0.18)
+        if complet:
+            text(msp, num, cx, cy + 0.35, 0.45)
+            text(msp, nom, cx, cy - 0.2, 0.22)
+            text(msp, f"{l_vert:.2f} × {l_horiz:.2f} m – S = {l_vert * l_horiz:.2f} m²".replace(".", ","),
+                 cx, cy - 0.6, 0.18)
+        else:
+            titre = f"{num} – {nom}"
+            dispo = min(l_horiz, dw) - 1.6          # place libre entre les murs et la cote verticale
+            h1 = min(0.40, dispo / (0.55 * len(titre)))
+            h2 = min(0.45, dispo / (0.55 * 13))
+            h1 = min(0.30, dispo / (0.55 * len(nom)))
+            text(msp, num, cx - 0.3, cy + 0.85, 0.50)
+            text(msp, nom, cx - 0.3, cy + 0.3, h1)
+            text(msp, f"{l_horiz:.2f} × {l_vert:.2f} m".replace(".", ","), cx - 0.3, cy - 0.3, h2)
+            text(msp, "(L × l)", cx - 0.3, cy - 0.75, 0.2)
         e = max(abs(dw - l_horiz), abs(dh - l_vert))
         ecarts.append(f"{num} : inscrit {l_vert:.2f} × {l_horiz:.2f} – dessin {dh:.2f} × {dw:.2f}"
                       .replace(".", ",") + (f"  (écart {e:.2f} m)".replace(".", ",") if e >= 0.05 else ""))
+
+    if not complet:
+        for name in ("CARTOUCHE", "PIECES_COTES_INSCRITES", "AMIANTE_ZONE",
+                     "AMIANTE_PRELEVEMENT", "ELEC_TE", "NOTES"):
+            doc.layers.remove(name)
+        doc.saveas(out)
+        return ecarts
 
     # 3) zone amiante (image masquée -> contour vectoriel)
     for im in page.get_images(full=True):
@@ -238,5 +276,5 @@ def convert(pdf: Path, out: Path, etage: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    for e in convert(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]):
+    for e in convert(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3], "--simple" not in sys.argv):
         print(e)
