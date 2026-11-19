@@ -25,6 +25,9 @@ import numpy as np
 import pymupdf
 from ezdxf.enums import TextEntityAlignment
 
+# Tailles communiquées par le client (prioritaires sur le tableau du PDF) : (l, L)
+TAILLES_IMPOSEES = {"Salle d'exercice": (6.90, 9.00), "Repos (dortoir)": (6.58, 5.50)}
+
 PT_PER_M = 14.13       # calage sur 101/104/106/115/201/203/204/208
 X0, Y0 = 100.0, 760.0  # origine (pt) -> le dessin reste en coordonnées positives
 BLACK = (0.0, 0.0, 0.0)
@@ -133,6 +136,24 @@ def item_in_cartouche(it):
     return all((p.x < 140 and p.y > 475) or (278 < p.x < 332 and 440 < p.y < 550) for p in pts)
 
 
+def draw_te(msp, page, legende=False):
+    """Tableau(x) électrique(s) d'étage : rectangle plein + repère « TE R+x »."""
+    for dr in page.get_drawings():
+        r = dr["rect"]
+        if r.x0 < 432 and rgb(dr.get("fill")) == (0.76, 0.09, 0.36):
+            pts = [M(r.x0, r.y0), M(r.x1, r.y0), M(r.x1, r.y1), M(r.x0, r.y1)]
+            msp.add_lwpolyline(pts, close=True, dxfattribs={"layer": "ELEC_TE"})
+            h = msp.add_hatch(color=6, dxfattribs={"layer": "ELEC_TE"})
+            h.paths.add_polyline_path(pts, is_closed=True)
+    for w in page.get_text("blocks"):
+        s = w[4].strip()
+        if w[2] < 432 and s.startswith("TE R"):
+            x, y = M((w[0] + w[2]) / 2, (w[1] + w[3]) / 2)
+            text(msp, s, x, y - 0.1, 0.35, "ELEC_TE")
+            if legende:
+                text(msp, "Tableau électrique", x, y - 0.55, 0.2, "ELEC_TE")
+
+
 def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]:
     """complet=False : fond de plan + salles cotées seulement (ni amiante, ni TE, ni notes, ni cartouche)."""
     pdoc = pymupdf.open(pdf)
@@ -179,6 +200,9 @@ def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]
             continue
         num, nom = lines[0], (lines[1] if len(lines) > 1 else "")
         l_vert, l_horiz = cotes[num]          # « l × L » : l = vertical, L = horizontal (cf. plan)
+        for prefixe, taille in TAILLES_IMPOSEES.items():
+            if nom.startswith(prefixe):
+                l_vert, l_horiz = taille
         lab = ((b[0] + b[2]) / 2, (b[1] + b[3]) / 2)
         xl, xr, yt, yb = room_faces(page, ink, S, lab)
         dw, dh = (xr - xl) / PT_PER_M, (yb - yt) / PT_PER_M
@@ -214,8 +238,9 @@ def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]
                       .replace(".", ",") + (f"  (écart {e:.2f} m)".replace(".", ",") if e >= 0.05 else ""))
 
     if not complet:
+        draw_te(msp, page, legende=True)
         for name in ("CARTOUCHE", "PIECES_COTES_INSCRITES", "AMIANTE_ZONE",
-                     "AMIANTE_PRELEVEMENT", "ELEC_TE", "NOTES"):
+                     "AMIANTE_PRELEVEMENT", "NOTES"):
             doc.layers.remove(name)
         doc.saveas(out)
         return ecarts
@@ -248,15 +273,11 @@ def convert(pdf: Path, out: Path, etage: str, complet: bool = True) -> list[str]
         if dr["items"][0][0] == "c" and f in ((0.08, 0.5, 0.24), (0.82, 0.0, 0.0)):
             msp.add_circle(M(*r.tl + (r.br - r.tl) / 2), r.width / 2 / PT_PER_M,
                            dxfattribs={"layer": "AMIANTE_PRELEVEMENT"})
-        elif f == (0.76, 0.09, 0.36):
-            msp.add_lwpolyline([M(r.x0, r.y0), M(r.x1, r.y0), M(r.x1, r.y1), M(r.x0, r.y1)],
-                               close=True, dxfattribs={"layer": "ELEC_TE"})
+    draw_te(msp, page)
     for w in page.get_text("blocks"):
         s = w[4].strip()
         if w[2] < 432 and re.fullmatch(r"P\d{4}", s):
             text(msp, s, *M((w[0] + w[2]) / 2, (w[1] + w[3]) / 2), 0.35, "AMIANTE_PRELEVEMENT")
-        elif w[2] < 432 and s.startswith("TE R"):
-            text(msp, s, *M((w[0] + w[2]) / 2, (w[1] + w[3]) / 2), 0.35, "ELEC_TE")
 
     # 5) notes (légende du PDF + écarts)
     nx, ny = M(445, 400)
