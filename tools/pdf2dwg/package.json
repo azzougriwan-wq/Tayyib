@@ -1,0 +1,9 @@
+{
+  "name": "pdf2dwg-tools",
+  "private": true,
+  "type": "module",
+  "description": "Conversion DXF -> DWG (R2018) sans ODA File Converter",
+  "dependencies": {
+    "@node-projects/acad-ts": "3.7.0"
+  }
+}
